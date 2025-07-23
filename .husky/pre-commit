@@ -1,0 +1,8 @@
+cd frontend
+yarn lint
+yarn test
+yarn build
+
+cd ../
+anchor build 
+anchor test
