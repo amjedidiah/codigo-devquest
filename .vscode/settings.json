@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
+        "devnet",
+        "Solflare",
         "TTFB"
-    ]
+    ],
+    "deepscan.enable": true
 }

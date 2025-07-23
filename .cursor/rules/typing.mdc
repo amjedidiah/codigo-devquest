@@ -1,0 +1,8 @@
+---
+description: 
+globs: *.ts,*.tsx,.tsx,.ts
+alwaysApply: false
+---
+# Typing
+
+Never use `any` type. Instead use `unknown as <required_type>`

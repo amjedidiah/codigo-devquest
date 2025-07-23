@@ -1,0 +1,1204 @@
+---
+description: 
+globs: .tsx,.ts,*.tsx,*.ts
+alwaysApply: false
+---
+# React Component Generation & Testing Rules
+
+When generating a React component, adhere STRICTLY to the following architectural pattern
+The core principle is a strict separation of concerns, prioritizing accessibility(CRITICAL), maintainability, and critical user-centric testing.
+
+## Usage Examples
+
+### For Generating a New Component
+
+> "Using the rules defined below as the single source of truth, please generate a new AlertBox component. These rules must take precedence over any conflicting patterns in the existing codebase."
+
+### For Refactoring an Existing Component
+
+> "The component src/components/common/call-to-action.tsx does not follow our new standards. Using the rules defined below as the single source of truth, please refactor it to be compliant. These rules must take precedence over the component's current structure."
+
+## 1. File Structure & Naming Conventions
+
+For each component named `MyComponent`, create:
+
+* Component(appearance): `MyComponent.tsx` (PascalCase)
+* Styling: `my-component.css` (kebab-case)
+* Logic Hook: `useMyComponent.ts` (camelCase with `use` prefix)
+* Test File: `MyComponent.test.tsx` (PascalCase with `.test` suffix)
+
+The resulting folder structure will be:
+
+```bash
+/components/MyComponent
+├── MyComponent.tsx
+├── my-component.css
+├── useMyComponent.ts
+└── MyComponent.test.tsx
+```
+
+### 1.1. One Component Per File Rule
+
+**STRICT REQUIREMENT**: Each file must contain exactly one component export. This ensures:
+
+* **Maintainability**: Easy to locate and modify specific components
+* **Testability**: Clear testing boundaries and isolated test scenarios
+* **Reusability**: Components can be imported independently
+* **Bundle Optimization**: Tree-shaking works effectively
+
+**Forbidden**:
+
+```tsx
+// ❌ WRONG: Multiple component exports in one file
+export const Button = () => <button>Click</button>;
+export const Icon = () => <span>🔔</span>;
+export const ButtonWithIcon = () => (
+  <Button><Icon /></Button>
+);
+```
+
+**Correct**:
+
+```tsx
+// ✅ CORRECT: One component export per file
+// /components/Button/Button.tsx
+export default function Button() {
+  return <button>Click</button>;
+}
+```
+
+Components are regular JavaScript functions, so you can keep multiple components in the same file.
+This is convenient when components are relatively small or tightly related to each other.
+
+In this case, the child component is not used in any other component outside the JSX/TSX file, but just the default exported parent in the same JSX/TSX file.
+The important thing is to keep files easy to scan and make it easy to reuse components in more places
+
+### 1.2. Child Component Structure
+
+All components, regardless of their parent-child relationship, are considered first-class components and must follow the standard file structure.
+Child components should **not** be nested inside a parent component's folder.
+
+This practice promotes reusability and prevents tight coupling.
+
+**Example**: If `UserProfile` (parent) uses a `Badge` (child) component, the folder structure would be:
+
+```bash
+/components
+├── Badge
+│   ├── Badge.tsx
+│   ├── badge.css
+│   ├── useBadge.ts
+│   └── Badge.test.tsx
+└── UserProfile
+    ├── UserProfile.tsx
+    ├── user-profile.css
+    ├── useUserProfile.ts
+    └── UserProfile.test.tsx
+```
+
+The `UserProfile.tsx` component would then simply import the `Badge` component:
+
+```tsx
+// /components/UserProfile/UserProfile.tsx
+import Badge from '@/components/Badge/Badge';
+// ...
+```
+
+### 1.3 Nesting Components
+
+When a child component needs some data from a parent, pass it by props instead of nesting definitions.
+
+```tsx
+export default function Gallery() {
+  // ❌ WRONG: Never define a component inside another component!
+  function Profile() {
+    // ...
+  }
+  // ...
+}
+```
+
+```tsx
+export default function Gallery() {
+  // ...
+}
+
+// ✅ CORRECT: Declare components at the top level
+function Profile() {
+  // ...
+}
+```
+
+## 2. Appearance (TSX File)
+
+* Responsibility: This file is exclusively for the component's UI structure (JSX).
+* Import the CSS file: `import './my-component.css'`
+* Clean Markup: Keep the markup clean and 100% semantic. Do not use `className`, `style`, or any other styling-related attributes.
+* Logic: The component must be purely presentational. It receives all its data and event handlers as props from its associated custom hook and/or parent.
+
+* Accessibility for Selection: Make elements selectable via accessible attributes instead of `data-testid`.
+If an element cannot be easily selected, add an appropriate accessible name.
+
+  * Use role for semantic elements (e.g., `<div role="status">`).
+  * Use aria-label for specificity when text content is not sufficient (e.g., `<button aria-label="Delete item">X</button>`).
+  * Use `aria-labelledby` for elements with associated labels
+  * Use proper HTML semantics (e.g., `<button>`, `<nav>`, `<main>`)
+
+Example Structure:
+
+```tsx
+<article aria-label="user card">
+  <h2>{user.name}</h2>
+  <p role="status">{status}</p>
+  <button aria-label="Edit user">Edit</button>
+</article>
+```
+
+### 2.1 Component Naming
+
+All components must have names.
+Component without names, like `export default () => {}`, are discouraged because they make debugging harder.
+
+```tsx
+// ❌ WRONG: Makes it impossible to apply `Rename Symbol` in code editor
+export default memo(function Board({
+ status,
+ squares,
+ setSquareValue,
+ winningSquares,
+}: Readonly<BoardProps>) {
+ return (
+  {...}
+ );
+});
+
+type BoardProps = Pick<
+ UseGameReturnType,
+ "status" | "squares" | "setSquareValue" | "winningSquares"
+>;
+```
+
+```tsx
+// ❌ WRONG: Won't show any component name in `React DevTools`
+const Board = memo(function({
+ status,
+ squares,
+ setSquareValue,
+ winningSquares,
+}: Readonly<BoardProps>) {
+ return (
+  {...}
+ );
+});
+
+type BoardProps = Pick<
+ UseGameReturnType,
+ "status" | "squares" | "setSquareValue" | "winningSquares"
+>;
+
+export default Board;
+```
+
+```tsx
+// ✅ CORRECT
+const Board = memo(function Board({
+ status,
+ squares,
+ setSquareValue,
+ winningSquares,
+}: Readonly<BoardProps>) {
+ return (
+  {...}
+ );
+});
+
+type BoardProps = Pick<
+ UseGameReturnType,
+ "status" | "squares" | "setSquareValue" | "winningSquares"
+>;
+
+export default Board;
+```
+
+### 2.2 The Rules of JSX
+
+* Return a single root element
+* Close all the tags
+* camelCase all most of the things - all attributes except: `aria-*` and `data-*` attributes
+
+### 2.3 Conditional Rendering
+
+Components should use standard React conditional rendering patterns. In React, you can conditionally render JSX using JavaScript syntax like if statements, &&, and ? : operators.
+
+**Recommended Patterns (in order of preference):**
+
+#### 2.3.1 Conditional Rendering in Parent (Preferred)
+
+```tsx
+// ✅ CORRECT: Conditionally render component in parent
+function TodoList({ todos, showCompleted }) {
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li key={todo.id}>
+          {todo.text}
+          {showCompleted && todo.completed && <CompletedBadge />}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+#### 2.3.2 Early Return with null
+
+```tsx
+// ✅ CORRECT: Early return with null when component shouldn't render
+function AlertMessage({ message, isVisible }) {
+  if (!isVisible || !message) {
+    return null;
+  }
+  
+  return (
+    <div role="alert" aria-label="alert message">
+      {message}
+    </div>
+  );
+}
+```
+
+#### 2.3.3 Logical AND Operator (&&)
+
+```tsx
+// ✅ CORRECT: Use && for simple show/hide logic
+function UserProfile({ user, isLoggedIn }) {
+  return (
+    <div>
+      <h1>Welcome</h1>
+      {isLoggedIn && (
+        <div>
+          <p>Hello, {user.name}!</p>
+          <button>Logout</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+#### 2.3.4 Ternary Operator (? :)
+
+```tsx
+// ✅ CORRECT: Use ternary for either/or scenarios
+function StatusIndicator({ isOnline }) {
+  return (
+    <span role="status">
+      {isOnline ? 'Online' : 'Offline'}
+    </span>
+  );
+}
+```
+
+#### 2.3.5 Variable Assignment
+
+```tsx
+// ✅ CORRECT: Use variables for complex conditional logic
+function OrderStatus({ order }) {
+  let statusContent = <span>Unknown status</span>;
+  
+  if (order.status === 'pending') {
+    statusContent = <span role="status">Processing your order...</span>;
+  } else if (order.status === 'shipped') {
+    statusContent = <span role="status">Order shipped!</span>;
+  } else if (order.status === 'delivered') {
+    statusContent = <span role="status">Order delivered ✅</span>;
+  }
+  
+  return (
+    <div aria-label="order status">
+      {statusContent}
+    </div>
+  );
+}
+```
+
+**Important Notes:**
+
+* React considers false as a "hole" in the JSX tree, just like null or undefined, and doesn't render anything in its place.
+* Returning `null` is a valid React pattern for hiding components
+* Prefer conditional rendering in the parent component when possible
+* Use accessible attributes (role, aria-label) for elements that appear/disappear
+
+### 2.4 Layout Shift Prevention
+
+Prevent Cumulative Layout Shift (CLS) by maintaining consistent layouts during state changes.
+Key Strategies include:
+
+#### 2.4.1 Placeholder Content
+
+```tsx
+// ✅ CORRECT: Use consistent placeholder heights
+function UserCard({ user, isLoading }) {
+  return (
+    <div aria-label="user card">
+      {isLoading ? (
+        <div>
+          <div role="status">Loading user...</div>
+          <div style={{ height: '60px' }}>
+            {/* Placeholder maintains height */}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h2>{user.name}</h2>
+          <p>{user.bio}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+#### 2.4.2 Skeleton Loading States
+
+```tsx
+// ✅ CORRECT: Skeleton maintains layout structure
+function ArticlePreview({ article, isLoading }) {
+  if (isLoading) {
+    return (
+      <article aria-label="article preview" data-loading="true">
+        <div role="status">Loading article...</div>
+        <div>Title loading...</div>
+        <div>Content loading...</div>
+      </article>
+    );
+  }
+  
+  return (
+    <article aria-label="article preview">
+      <h2>{article.title}</h2>
+      <p>{article.excerpt}</p>
+    </article>
+  );
+}
+```
+
+#### 2.4.3 State Transformation Instead of Removal
+
+```tsx
+// ✅ CORRECT: Transform items instead of removing them
+function TodoItem({ todo, onToggle, onDelete }) {
+  return (
+    <li data-completed={todo.completed}>
+      <span>{todo.text}</span>
+      <button onClick={() => onToggle(todo.id)}>
+        {todo.completed ? 'Undo' : 'Complete'}
+      </button>
+      <button onClick={() => onDelete(todo.id)}>
+        Delete
+      </button>
+    </li>
+  );
+}
+
+// CSS handles visual changes without layout shift
+// li[data-completed="true"] span {
+//   text-decoration: line-through;
+//   opacity: 0.6;
+// }
+```
+
+#### 2.4.4 Consistent Container Dimensions
+
+```tsx
+// ✅ CORRECT: Maintain consistent container sizes
+function ImageGallery({ images, isLoading }) {
+  return (
+    <div aria-label="image gallery">
+      {isLoading ? (
+        <div role="status">Loading images...</div>
+      ) : (
+        <div>
+          {images.map(image => (
+            <img 
+              key={image.id}
+              src={image.url}
+              alt={image.alt}
+              width={200}
+              height={150}
+              // Consistent dimensions prevent layout shift
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+#### 2.4.5 Progressive Enhancement
+
+```tsx
+// ✅ CORRECT: Start with content, enhance with interactivity
+function ExpandableSection({ title, content, defaultExpanded = false }) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  
+  return (
+    <section aria-label="expandable section">
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+      >
+        {title}
+      </button>
+      {/* Always render content container to maintain layout */}
+      <div data-expanded={isExpanded}>
+        {content}
+      </div>
+    </section>
+  );
+}
+```
+
+#### 2.4.6 CSS Support for Layout Stability
+
+```css
+/* Smooth transitions prevent jarring layout changes */
+[data-expanded="false"] {
+  @apply max-h-0 overflow-hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+[data-expanded="true"] {
+  @apply max-h-screen;
+  transition: max-height 0.3s ease-in;
+}
+
+/* Loading states maintain dimensions */
+[data-loading="true"] {
+  @apply min-h-32 animate-pulse;
+}
+```
+
+### 2.5 List Keys
+
+When rendering lists, provide stable, unique keys for each item. Never use array indices as keys when the list can change.
+
+**Why indices are problematic:**
+
+* Cause rendering bugs when items are reordered, added, or removed
+* Break component state and form inputs
+* Hurt performance by preventing React's reconciliation optimizations
+
+**Preferred approaches:**
+
+```tsx
+// ✅ CORRECT: Use stable unique identifiers
+const todos = [
+  { id: 'todo-1', text: 'Learn React', completed: false },
+  { id: 'todo-2', text: 'Build app', completed: true }
+];
+
+return (
+  <ul>
+    {todos.map(todo => (
+      <li key={todo.id}>{todo.text}</li>
+    ))}
+  </ul>
+);
+
+// ✅ CORRECT: Generate stable IDs for data. Keys must not change or that defeats their purpose! Don’t generate them while rendering.
+const items = ['apple', 'banana', 'cherry'];
+const displayedItems = items.map(item => ({id: crypto.randomUUID(), value: item})) // `crypto.randomUUID` returns unique random values for all items, whether all items are unique or some are same
+return (
+  <ul>
+    {displayedItems.map(({id, value}) => (
+      <li key={id}>{value}</li>
+    ))}
+  </ul>
+);
+
+// ❌ WRONG: Using array index (causes bugs when list changes)
+return (
+  <ul>
+    {items.map((item, index) => (
+      <li key={index}>{item}</li>
+    ))}
+  </ul>
+);
+```
+
+### 2.6 Pure Components (Essential Rule)
+
+**CRITICAL PRINCIPLE**: Components must be pure functions that always return the same JSX for the same inputs.
+
+#### What Makes a Component Pure
+
+A pure component:
+
+* **Same inputs, same output**: Given the same props, always renders identical JSX
+* **Minds its own business**: Doesn't modify variables or objects that existed before rendering
+* **No side effects during render**: All mutations happen in event handlers or effects, never during render
+
+#### Pure Component Examples
+
+```tsx
+// ✅ CORRECT: Pure component - same props always produce same output
+function UserCard({ user, isSelected }) {
+  return (
+    <article aria-label="user card" data-selected={isSelected}>
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </article>
+  );
+}
+
+// ✅ CORRECT: Pure with local variables (created during render)
+function ShoppingList({ items }) {
+  const totalItems = items.length; // Local variable - OK
+  const hasItems = totalItems > 0;  // Derived from props - OK
+  
+  return (
+    <div aria-label="shopping list">
+      <h2>Items ({totalItems})</h2>
+      {hasItems ? (
+        <ul>
+          {items.map(item => (
+            <li key={item.id}>{item.name}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No items in your list</p>
+      )}
+    </div>
+  );
+}
+```
+
+#### Common Impurity Violations
+
+```tsx
+// ❌ WRONG: Mutating existing objects/arrays
+function TodoList({ todos }) {
+  todos.push({ id: 4, text: 'New todo' }); // ❌ Mutating props
+  return <ul>{todos.map(todo => <li key={todo.id}>{todo.text}</li>)}</ul>;
+}
+
+// ❌ WRONG: Modifying global variables during render
+let globalCounter = 0;
+function Counter({ count }) {
+  globalCounter++; // ❌ Side effect during render
+  return <div>{count}</div>;
+}
+
+// ❌ WRONG: Making network calls during render
+function UserProfile({ userId }) {
+  const userData = fetch(`/api/users/${userId}`); // ❌ Side effect during render
+  return <div>...</div>;
+}
+
+// ❌ WRONG: Mutating DOM directly during render
+function MessageBox({ message }) {
+  document.title = message; // ❌ Side effect during render
+  return <div>{message}</div>;
+}
+```
+
+#### Correct Patterns for Side Effects
+
+```tsx
+// ✅ CORRECT: Side effects in event handlers
+function TodoList({ todos, onAddTodo }) {
+  const handleAdd = () => {
+    onAddTodo({ id: Date.now(), text: 'New todo' }); // ✅ Mutation in event handler
+  };
+  
+  return (
+    <div>
+      <ul>
+        {todos.map(todo => (
+          <li key={todo.id}>{todo.text}</li>
+        ))}
+      </ul>
+      <button onClick={handleAdd}>Add Todo</button>
+    </div>
+  );
+}
+
+// ✅ CORRECT: Side effects in useEffect (from custom hook)
+function UserProfile({ userId }) {
+  const { userData, setTitle } = useUserProfile(userId);
+  
+  // setTitle effect runs in the custom hook, not during render
+  return <div>{userData?.name}</div>;
+}
+```
+
+#### Key Reminder
+
+**During render, components should only read props and state, never modify anything.**
+All modifications should happen in response to user interactions (event handlers) or after rendering (effects in custom hooks).
+
+## 3. Styling (CSS File)
+
+* CSS Zen Garden Approach: All component styling is fully encapsulated in its dedicated CSS file.
+* Tailwind with @apply: Use Tailwind CSS utility classes exclusively through the `@apply` directive.
+* Scoped & Accessible Selectors:
+  * The root selector must be the component's unique `aria-label` attribute.
+  * Child elements must be styled by nesting selectors under the root ID.
+  * Do not use data-testid for selectors. Instead, target elements using their accessible attributes ([role="..."], [aria-label="..."]), or semantic HTML tags (button, h2), just like they would be selected by React Testing Library.
+
+Selector Priority (NO data-testid or IDs):
+
+* `[aria-label="label-text"]` for labelled elements
+* `[role="role-name"]` for semantic roles
+* Element type selectors (e.g., `article`, `button`, `h2`)
+* Pseudo-selectors and combinators when needed
+
+Example (user-profile.css):
+
+```css
+@import "tailwindcss";
+
+/* Root Selector with Nested Selectors */
+article[aria-label="user card"] {
+  @apply p-4 bg-white rounded-lg shadow-md;
+
+  /* Selecting by element type */
+  h2 {
+    @apply text-xl font-bold text-gray-800 mb-2;
+  }
+
+  /* Selecting by role */
+  [role="status"] {
+    @apply text-sm text-gray-600;
+  }
+
+  /* Selecting by aria-label */
+  button[aria-label="Edit user"] {
+    @apply mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600;
+  }
+}
+```
+
+### Conditional Styling
+
+To apply styles based on component state (e.g., from props or a logic hook), use `data-*` attributes in the TSX file to reflect the state in the DOM. The CSS file can then use attribute selectors to style the component conditionally.
+
+This is the preferred method over using ARIA attributes for purely stylistic purposes.
+
+**Example**:
+
+```css
+@import "tailwindcss";
+
+/* Styling an element based on its data-active attribute */
+[data-active="true"] {
+  @apply text-blue-500;
+}
+
+[data-active="false"] {
+  @apply text-gray-500;
+}
+```
+
+## 4. Logic (Custom Hook File)
+
+* Responsibility: This file contains all business logic, state, and side effects.
+* Encapsulation: All logic is encapsulated in a custom hook (e.g., useMyComponent). This hook manages state, event handlers, and data fetching.
+* Return Value: The hook must return an object containing all the state variables and functions the presentational component needs to operate.
+* Use TypeScript for type safety
+
+### 4.1. useEffect as Last Resort
+
+**CRITICAL PRINCIPLE**: `useEffect` should be your last resort. Before using `useEffect`, consider these alternatives:
+
+**Prefer Event Handlers** over effects for user interactions:
+
+```tsx
+// ❌ WRONG: Using effect for user-triggered actions
+useEffect(() => {
+  if (shouldSubmit) {
+    submitForm();
+  }
+}, [shouldSubmit]);
+
+// ✅ CORRECT: Handle in event handler
+const handleSubmit = () => {
+  submitForm();
+};
+```
+
+**Prefer Calculating During Render** for derived state:
+
+```tsx
+// ❌ WRONG: Using effect to calculate derived state
+const [items, setItems] = useState([]);
+const [expensiveValue, setExpensiveValue] = useState(null);
+
+useEffect(() => {
+  setExpensiveValue(items.reduce(...)); // Expensive calculation
+}, [items]);
+
+// ✅ CORRECT: Calculate during render with useMemo
+const [items, setItems] = useState([]);
+const expensiveValue = useMemo(() =>
+  items.reduce(...), [items]
+);
+```
+
+**Use useEffect ONLY for**:
+
+* Synchronizing with external systems (APIs, DOM, timers)
+* Clean-up operations (subscriptions, timers)
+* Side effects that must happen after render
+
+### 4.2. Performance Optimization Rules
+
+**Memory Efficiency**:
+
+* Use `useMemo` for expensive calculations only
+* Use `useCallback` for functions passed to optimized child components
+* Prefer primitive values over objects in dependency arrays
+
+**Minimal Re-renders**:
+
+* Split state that changes independently into separate `useState` calls
+* Use refs (`useRef`) for values that don't trigger re-renders
+* Consider `useReducer` for complex state logic instead of multiple `useState`
+
+**Time Complexity**:
+
+* Avoid O(n²) operations in render or effects
+* Use `useMemo` to cache expensive computations
+* Batch related state updates together
+
+```tsx
+// ✅ GOOD: Optimized hook example
+export const useOptimizedComponent = (data: Item[]) => {
+  // Split independent state
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Cache expensive computation
+  const sortedData = useMemo(() =>
+    data.sort((a, b) => a.priority - b.priority),
+    [data]
+  );
+
+  // Use ref for values that don't need re-renders
+  const renderCount = useRef(0);
+  renderCount.current++;
+
+  // Memoize callbacks for child components
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId(id);
+    setIsOpen(false);
+  }, []);
+
+  return {
+    isOpen,
+    selectedId,
+    sortedData,
+    handleToggle: () => setIsOpen(prev => !prev),
+    handleSelect,
+  };
+};
+```
+
+### 4.3. React Anti-Patterns to Avoid
+
+**Some Hook Anti-Patterns**:
+
+```tsx
+// ❌ WRONG: Calling setState inside another setState
+const [count, setCount] = useState(0);
+const [doubled, setDoubled] = useState(0);
+
+const increment = () => {
+  setCount(prev => {
+    const newCount = prev + 1;
+    setDoubled(newCount * 2); // ❌ setState inside setState
+    return newCount;
+  });
+};
+
+// ✅ CORRECT: Use derived state or separate calls
+const increment = () => {
+  setCount(prev => prev + 1);
+  // doubled should be calculated from count, not stored separately
+};
+const doubled = count * 2; // Derive from existing state
+```
+
+```tsx
+// ❌ WRONG: Creating objects/functions in render
+const MyComponent = () => {
+  const config = { timeout: 1000 }; // New object every render
+  const handler = () => console.log('click'); // New function every render
+
+  return <Child config={config} onClick={handler} />;
+};
+
+// ✅ CORRECT: Memoize or move outside
+const DEFAULT_CONFIG = { timeout: 1000 }; // Outside component
+
+const MyComponent = () => {
+  const handler = useCallback(() => console.log('click'), []);
+
+  return <Child config={DEFAULT_CONFIG} onClick={handler} />;
+};
+```
+
+**Component Anti-Patterns**:
+
+```tsx
+// ❌ WRONG: Conditional hook calls
+const MyComponent = ({ shouldFetch }) => {
+  if (shouldFetch) {
+    const data = useFetch('/api/data'); // ❌ Conditional hook
+  }
+  return <div>...</div>;
+};
+
+// ✅ CORRECT: Always call hooks, conditionally execute logic
+const MyComponent = ({ shouldFetch }) => {
+  const data = useFetch(shouldFetch ? '/api/data' : null);
+  return <div>...</div>;
+};
+```
+
+```tsx
+// ❌ WRONG: Mutating props or state
+const MyComponent = ({ items }) => {
+  items.push(newItem); // ❌ Mutating props
+  return <div>...</div>;
+};
+
+// ✅ CORRECT: Create new arrays/objects
+const MyComponent = ({ items }) => {
+  const updatedItems = [...items, newItem];
+  return <div>...</div>;
+};
+```
+
+Hook Structure:
+
+```ts
+export const useMyComponent = () => {
+  // State, effects, handlers, etc.
+
+  return {
+    // Data
+    data,
+    isLoading,
+    error,
+
+    // Handlers
+    handleClick,
+    handleSubmit,
+
+    // Computed values
+    computedValue
+  };
+};
+```
+
+## 5. Testing (Test File)
+
+### 5.1. Test-Driven Development (TDD) Approach
+
+**MANDATORY**: Follow the Red-Green-Refactor cycle for all component development:
+
+**🔴 RED**: Write a failing test first
+
+* Write the smallest possible test that captures the desired behaviour
+* Ensure the test fails for the right reason (feature not implemented)
+* Focus on user-facing behaviour, not implementation details
+
+**🟢 GREEN**: Write minimal code to make the test pass
+
+* Implement only enough code to make the current test pass
+* Don't optimize or add extra features
+* Keep the implementation simple and direct
+
+**🔵 REFACTOR**: Improve code quality without changing behaviour
+
+* Clean up duplication
+* Improve performance and maintainability
+* Ensure all tests still pass
+
+**TDD Workflow Example**:
+
+```tsx
+// 🔴 RED: Write failing test first
+it('should display loading state while fetching user data', () => {
+  render(<UserProfile userId="1" />);
+  expect(screen.getByRole('status')).toHaveTextContent(/loading/i);
+});
+// This test will fail because UserProfile doesn't exist yet
+
+// 🟢 GREEN: Write minimal implementation
+const UserProfile = ({ userId }) => {
+  return <div role="status">Loading...</div>;
+};
+// Test now passes with minimal implementation
+
+// 🔵 REFACTOR: Improve implementation
+const UserProfile = ({ userId }) => {
+  const { isLoading } = useUserProfile(userId);
+
+  if (isLoading) {
+    return <div role="status">Loading user profile...</div>;
+  }
+  // Add more features following the same cycle
+};
+```
+
+### 5.2. Testing Rules
+
+* Principle: Follow React Testing Library's principles of testing user interaction, not implementation details. Focus on creating only CRITICAL tests that verify the component's behaviour from a user's perspective.
+* Test Creation Rules:
+  * No `data-testid`: Never use `getByTestId` or `data-testid` attributes. Use accessible selectors like `getByRole`, `getByLabelText`, `getByText`, etc.
+  * Don't Mock Local Code: Do not mock components or hooks that are part of this codebase. Test the integrated behaviour.
+  * Critical Mocks Only: Only mock external dependencies (e.g., API calls, third-party libraries). For every mock used, add a code comment explaining precisely why it is critical and could not be avoided.
+  * Cleanliness: Avoid over-engineered tests, redundant assertions, unused variables, and unnecessary comments.
+  * Sequential Creation: When asked to generate multiple tests, create them one at a time, ensuring each passes before proceeding.
+
+Query Priority (in order):
+
+* `getByRole` / `findByRole`
+* `getByLabelText` / `findByLabelText`
+* `getByPlaceholderText`
+* `getByText` / `findByText`
+* `getByDisplayValue`
+
+Test Structure:
+
+```tsx
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import MyComponent from './MyComponent';
+
+describe('MyComponent', () => {
+  it('should handle user interaction correctly', async () => {
+    const user = userEvent.setup();
+    render(<MyComponent />);
+
+    // Use accessible queries
+    const editButton = screen.getByRole('button', { name: 'Edit user' });
+    await user.click(editButton);
+
+    // Assert user-facing behaviour
+    expect(screen.getByRole('textbox', { name: 'User name' })).toBeInTheDocument();
+  });
+
+  // Only test CRITICAL paths - avoid:
+  // - Testing implementation details
+  // - Redundant tests
+  // - Over-engineered test setups
+});
+```
+
+Mock Documentation Example:
+
+```ts
+import { vi } from 'vitest';
+
+// CRITICAL MOCK: External API calls must be mocked to avoid network requests in tests.
+// The `vi` object from Vitest is used to create mocks.
+vi.mock('axios');
+```
+
+## Complete Example: `UserProfile` Component
+
+```tsx
+// /components/UserProfile/UserProfile.tsx
+import React from 'react';
+import '@/components/UserProfile/user-profile.css';
+import useUserProfile from '@/components/UserProfile/useUserProfile';
+
+interface UserProfileProps {
+  userId: string;
+}
+
+function UserProfile({ userId }: UserProfileProps) {
+  const { data: user, status, error } = useUserProfile(userId);
+
+  return (
+    <article aria-label="user profile">
+      <h2>User Profile</h2>
+      {status === 'loading' && <p role="status">Loading...</p>}
+      {status === 'failed' && <p role="alert">{error}</p>}
+      {status === 'success' && user && (
+        <dl>
+          <dt>Name</dt>
+          <dd>{user.name}</dd>
+          <dt>Email</dt>
+          <dd>{user.email}</dd>
+          <dt>Status</dt>
+          <dd data-active={user.isActive} aria-label="user status">
+            {user.isActive ? 'Active' : 'Inactive'}
+          </dd>
+        </dl>
+      )}
+    </article>
+  );
+};
+
+export default UserProfile;
+```
+
+```css
+/** /components/UserProfile/user-profile.css **/
+@import "tailwindcss";
+
+/* Root Selector with Nested Selectors */
+article[aria-label="user profile"] {
+  @apply p-4 bg-white rounded-lg shadow-md font-sans;
+
+  h2 {
+    @apply text-xl font-bold text-gray-800 mb-2;
+  }
+
+  [role="status"],
+  [role="alert"] {
+    @apply text-sm text-gray-600;
+  }
+
+  [role="alert"] {
+    @apply text-red-600;
+  }
+
+  dl {
+    @apply grid grid-cols-2 gap-x-4 gap-y-2;
+  }
+
+  dt {
+    @apply font-semibold text-gray-700;
+  }
+
+  dd {
+    @apply text-gray-600;
+  }
+
+  dd[data-active="true"] {
+    @apply text-blue-600 font-semibold;
+  }
+
+  dd[data-active="false"] {
+    @apply text-gray-600 font-semibold;
+  }
+}
+```
+
+```ts
+// /components/UserProfile/useUserProfile.ts
+import { useState, useEffect } from 'react';
+
+// Assume a user type definition exists
+interface User {
+  name: string;
+  email: string;
+  isActive: boolean
+};
+
+type Status = 'idle' | 'loading' | 'success' | 'failed'
+
+export const useUserProfile = (userId: string) => {
+  const [data, setData] = useState<User | null>(null);
+  const [status, setStatus] = useState<Status>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setStatus('loading');
+      setData(null);
+      setError(null);
+
+      try {
+        const response = await fetch(`https://api.example.com/users/${userId}`);
+        if (!response.ok) throw new Error('User not found');
+
+        const userData: User = await response.json();
+
+        setData(userData);
+        setStatus('success');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setStatus('failed');
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  return { data, status, error };
+};
+```
+
+```tsx
+// /components/UserProfile/UserProfile.test.tsx
+import React from 'react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import UserProfile from '@/components/UserProfile/UserProfile';
+
+// Mocking the global fetch function with Vitest's `vi.fn()`
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+// This mock is CRITICAL because we must isolate the component from actual network requests
+// during tests. This ensures tests are fast, reliable, and don't depend on a live backend.
+
+describe('UserProfile', () => {
+  beforeEach(() => {
+    // Vitest's `vi.clearAllMocks()` is a good practice to reset mocks before each test
+    vi.clearAllMocks();
+  });
+
+  it('CRITICAL: should display user data after a successful API call', async () => {
+    const mockUser = { name: 'John Doe', email: 'john.doe@example.com', isActive: true };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockUser,
+    });
+
+    render(<UserProfile userId="1" />);
+
+    // Check for loading state first
+    expect(screen.getByRole('status')).toHaveTextContent(/loading/i);
+
+    // Wait for the user's name to appear and verify the data
+    const userName = await screen.findByText(mockUser.name);
+    expect(userName).toBeInTheDocument();
+    expect(screen.getByText(mockUser.email)).toBeInTheDocument();
+    expect(screen.getByLabelText('user status')).toHaveTextContent('Active');
+  });
+
+  it('CRITICAL: should display "Inactive" when the user is not active', async () => {
+    const mockUser = { name: 'Jane Doe', email: 'jane.doe@example.com', isActive: false };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockUser,
+    });
+
+    render(<UserProfile userId="2" />);
+
+    // Wait for the user's name to appear and verify the status
+    await screen.findByText(mockUser.name);
+    expect(screen.getByLabelText('user status')).toHaveTextContent('Inactive');
+  });
+
+  it('CRITICAL: should display an error message if the API call fails', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('User not found'));
+
+    render(<UserProfile userId="1" />);
+
+    // Wait for and verify the error message
+    const errorAlert = await screen.findByRole('alert');
+    expect(errorAlert).toHaveTextContent(/user not found/i);
+  });
+});
+```

@@ -1,0 +1,287 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Thinking in React - Application Architecture Rules
+
+When building React applications, follow these architectural principles that complement the React Component Generation & Testing Rules: [component-creation.mdc](component-creation.mdc). These focus specifically on application-level design, data flow, and the "Thinking in React" methodology.
+
+## Core Performance Goals
+
+- **Zero Layout Shift**: Reserve space during loading states
+- **Zero Waterfall**: Load data in parallel, not sequentially  
+- **Minimal Re-renders**: Optimize state placement and data flow
+
+## Usage Examples
+
+### For Application Architecture
+
+> "Using the Thinking in React architecture rule, design the component hierarchy and data flow for a product catalog page."
+
+### For State Management Design  
+
+> "Apply the state location strategy from Thinking in React rule to determine where user authentication state should live in this component tree."
+
+## When to Use a Framework
+
+**Rule**: If the app needs routing → use a framework: [Next.js](https:/nextjs.org/docs/app/getting-started/installation) automatic installation
+**Exception**: Simple apps without routing can use [vanilla React with Vite](https:/react.dev/learn/build-a-react-app-from-scratch) instead of Create React App
+
+## 1. Application Design Process
+
+### 1.1. UI → Component Hierarchy
+
+**MANDATORY PROCESS**: Before writing any code, break down the UI:
+
+1. **Box Everything**: Draw boxes around every UI section in the mock-up
+2. **Name by Responsibility**: Each box gets a component name based on what it does
+3. **Create Hierarchy**: Arrange as a tree structure
+
+**Example Hierarchy Analysis**:
+
+```bash
+ProductCatalog (manages search/filter state)
+├── SearchBar (handles query input)
+├── FilterPanel (handles category selection)  
+└── ProductTable (displays filtered results)
+    ├── ProductCategoryRow (section headers)
+    └── ProductRow (individual products)
+```
+
+**Key Question**: "What is this component's single job?"
+
+### 1.2. Build Static Version First
+
+**APPROACH**: Build bottom-up using only `props` (no `state` yet):
+
+1. Start with leaf components (components with no children)
+2. Pass mock data through props  
+3. Build parents that compose children
+4. Data flows DOWN only via props
+
+```tsx
+// Step 1: Leaf component
+const ProductRow = ({ product }) => (
+  <tr><td>{product.name}</td><td>{product.price}</td></tr>
+);
+
+// Step 2: Parent composes children  
+const ProductTable = ({ products }) => (
+  <table>
+    {products.map(product => 
+      <ProductRow key={product.id} product={product} />
+    )}
+  </table>
+);
+```
+
+## 2. State Management Strategy
+
+### 2.1. What IS State vs What ISN'T
+
+**Decision Tree**:
+
+- Passed from parent via props? → **NOT STATE**
+- Never changes over time? → **NOT STATE**  
+- Can be computed from other state/props? → **NOT STATE**
+- Otherwise → **STATE**
+
+```tsx
+// ❌ WRONG: Storing derived data
+const [items, setItems] = useState([]);
+const [itemCount, setItemCount] = useState(0); // ❌ items.length
+
+// ✅ CORRECT: Compute derived values
+const [items, setItems] = useState([]);
+const itemCount = items.length; // ✅ Computed
+const hasItems = itemCount > 0; // ✅ Computed
+```
+
+### 2.2. State Location Strategy
+
+**LIFTING STATE UP Algorithm**:
+
+1. **List** all components that need this state
+2. **Find** their closest common parent  
+3. **Place state** in that parent (or above if needed)
+
+```tsx
+// ❌ WRONG: State too low, can't be shared
+const SearchBar = () => {
+  const [query, setQuery] = useState(''); // Other components need this!
+  return <input value={query} onChange={e => setQuery(e.target.value)} />;
+};
+
+// ✅ CORRECT: State lifted to common parent
+const ProductCatalog = () => {
+  const [query, setQuery] = useState(''); // ✅ Available to all children
+  
+  return (
+    <div>
+      <SearchBar query={query} onQueryChange={setQuery} />
+      <ProductTable query={query} />
+    </div>
+  );
+};
+```
+
+### 2.3. Inverse Data Flow (Events Up)
+
+**PATTERN**: Child components receive event handlers to update parent state.
+
+```tsx
+// Parent manages state, passes handlers down
+const ProductCatalog = () => {
+  const [query, setQuery] = useState('');
+  
+  return (
+    <SearchBar 
+      query={query} 
+      onQueryChange={setQuery} // ✅ Pass handler down
+    />
+  );
+};
+
+// Child calls handler to update parent state  
+const SearchBar = ({ query, onQueryChange }) => (
+  <input 
+    value={query}
+    onChange={(e) => onQueryChange(e.target.value)} // ✅ Call handler up
+  />
+);
+```
+
+**Naming Convention**:
+
+- **State props**: `query`, `selectedItems`, `isLoading`
+- **Handler props**: `onQueryChange`, `onItemSelect`, `onSubmit`
+
+## 3. Performance Patterns
+
+### 3.1. Zero Layout Shift
+
+**CRITICAL**: Reserve space during loading to prevent UI jumps.
+
+```tsx
+// ✅ CORRECT: Reserve space during loading
+const ProductTable = ({ products, isLoading }) => (
+  <div style={{ minHeight: '400px' }}> {/* Reserve space */}
+    {isLoading ? (
+      <div>Loading products...</div>
+    ) : (
+      products.map(product => <ProductRow key={product.id} product={product} />)
+    )}
+  </div>
+);
+```
+
+### 3.2. Zero Waterfall Loading
+
+**ANTI-PATTERN**: Sequential loading that blocks each other.
+
+```tsx
+// ❌ WRONG: Waterfall - each waits for the previous
+useEffect(() => {
+  fetchCategories().then(setCategories);
+}, []);
+
+useEffect(() => {
+  if (categories.length > 0) fetchProducts().then(setProducts); // ❌ Waits for categories
+}, [categories]);
+
+// ✅ CORRECT: Parallel loading
+useEffect(() => {
+  Promise.all([
+    fetchCategories(),
+    fetchProducts(),
+    fetchUserPreferences()
+  ]).then(([categories, products, preferences]) => {
+    setCategories(categories);
+    setProducts(products); 
+    setUserPreferences(preferences);
+  });
+}, []);
+```
+
+**SERVER COMPONENTS**: In Next.js App Router, prefer server components with Suspense for optimal loading:
+
+```tsx
+// ✅ BEST: Server components load in parallel automatically
+const ProductCatalog = () => (
+  <div>
+    <Suspense fallback={<CategoriesSkeleton />}>
+      <CategoriesServer />
+    </Suspense>
+    <Suspense fallback={<ProductsSkeleton />}>
+      <ProductsServer />
+    </Suspense>
+  </div>
+);
+```
+
+## 4. Thinking in React Workflow
+
+**MANDATORY SEQUENCE**: Follow these steps in exact order:
+
+### Step 1: Break UI into Component Hierarchy
+
+- Draw boxes around UI sections
+- Name each component by its responsibility  
+- Create component tree diagram
+
+### Step 2: Build Static Version
+
+- Build bottom-up (children first)
+- Use only props, no state
+- Focus on data structure and layout
+
+### Step 3: Identify Minimal State
+
+- Apply the "State vs Not State" decision tree
+- Keep state minimal and non-redundant
+
+### Step 4: Identify State Location  
+
+- Use the "Lifting State Up" algorithm
+- Place state in appropriate common parent
+
+### Step 5: Add Inverse Data Flow
+
+- Add event handlers for user interactions
+- Connect user actions to state changes
+
+## 5. Quick Reference
+
+**State Decision Tree**:
+
+```md
+Props from parent? → NOT STATE
+Never changes? → NOT STATE  
+Derivable from other state? → NOT STATE
+Otherwise → STATE
+```
+
+**State Location**:
+
+```md
+1. List components that need it
+2. Find common parent
+3. Put state there (or above)
+```
+
+**Data Flow**:
+
+```md
+Data DOWN via props
+Events UP via callbacks
+```
+
+**Performance**:
+
+```md
+Reserve space → Zero layout shift
+Load parallel → Zero waterfall
+Server components + Suspense → Optimal loading
+Minimal state → Fewer re-renders
+```
