@@ -1,4 +1,4 @@
-# Implementation Guide: Solana Memo dApp Frontend
+# Milestone 1 Implementation Guide: Solana Memo dApp Frontend
 
 > Objective: Build a React frontend for the Solana Memo dApp following strict architectural patterns and accessibility standards. Each step must be completed sequentially with proper verification.
 
