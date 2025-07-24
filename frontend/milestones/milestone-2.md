@@ -45,9 +45,9 @@ App.tsx (Root Application)
 
 ## Phase 1: New Dependencies & Setup
 
-- [ ] 1. **Install PWA Plugin**: Add `vite-plugin-pwa` to enable PWA capabilities.
-- [ ] 2. **Install IPFS Client**: Add an IPFS client library (e.g., `kubo-rpc-client` or a wrapper for a pinning service like Pinata) to handle audio file uploads.
-- [ ] 3. **Install Date Management Library**: Add a library like `date-fns` to assist with date filtering logic.
+- [x] 1. **Install PWA Plugin**: Add `vite-plugin-pwa` to enable PWA capabilities.
+- [x] 2. **Install IPFS Client**: Add an IPFS client library (e.g., `kubo-rpc-client` or a wrapper for a pinning service like Pinata) to handle audio file uploads.
+- [x] 3. **Install Date Management Library**: Add a library like `date-fns` to assist with date filtering logic.
 
 ## Phase 2: Feature 1 - Memo Retrieval & Display
 
