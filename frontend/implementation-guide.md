@@ -2,6 +2,35 @@
 
 > Objective: Build a React frontend for the Solana Memo dApp following strict architectural patterns and accessibility standards. Each step must be completed sequentially with proper verification.
 
+## Component Hierarchy & Architecture
+
+```bash
+App.tsx (Root Application)
+├── ConnectionProvider (Solana RPC connection)
+├── WalletProvider (Wallet adapter context)
+└── WalletModalProvider (Wallet connection UI)
+    └── Main Application Container
+        ├── WalletConnect (Pure component)
+        │   └── useWalletConnect (Connection state hook)
+        └── MemoForm (Pure form component)
+            ├── useMemoForm (Transaction logic hook)
+            └── StatusDisplay (Pure status component)
+                └── useStatusDisplay (Status computation hook)
+```
+
+**Data Flow:**
+
+- `App.tsx` → Provides Solana context to all children
+- `WalletConnect` → Handles wallet connection UI
+- `MemoForm` → Manages form state and transaction submission
+- `StatusDisplay` → Displays transaction status (loading/error/success)
+
+**Hook Responsibilities:**
+
+- `useWalletConnect` → Wallet connection state
+- `useMemoForm` → Form state, validation, transaction logic
+- `useStatusDisplay` → Status computation, Explorer URL generation
+
 ## Phase 1: Project Setup & Initialization
 
 - [x] 1. Create the React Application with TypeScript template
@@ -26,7 +55,7 @@
 
 ### 🔴 RED Phase: Write Failing Tests First
 
-- [ ] 1. Create StatusDisplay Test Suite in `src/components/StatusDisplay/StatusDisplay.test.tsx`. Write failing tests for:
+- [x] 1. Create StatusDisplay Test Suite in `src/components/StatusDisplay/StatusDisplay.test.tsx`. Write failing tests for:
   - Loading state display with role="status"
   - Error message display with role="alert"
   - Success state with transaction link
@@ -34,70 +63,71 @@
 
   > Use getByRole, avoid data-testid
 
-- [ ] 2. Create WalletConnect Test Suite in `src/components/WalletConnect/WalletConnect.test.tsx` Write failing tests for:
+- [x] 2. Create WalletConnect Test Suite in `src/components/WalletConnect/WalletConnect.test.tsx` Write failing tests for:
   - Wallet button renders correctly
   - Component integrates with wallet provider context
 
   > Mock wallet adapter components (CRITICAL: external library)
 
-- [ ] 3. Create MemoForm Test Suite in `src/components/MemoForm/MemoForm.test.tsx`. Write failing tests for:
+- [x] 3. Create MemoForm Test Suite in `src/components/MemoForm/MemoForm.test.tsx`. Write failing tests for:
   - Form renders with textarea and submit button
   - Submit button disabled when wallet not connected
   - Input value updates on user typing
   - Form submission triggers Solana transaction
   - Loading states during transaction
   - Success/error feedback display
+  - Validation for required `memo` field
 
   > Mock Solana hooks (CRITICAL: external blockchain calls)
 
 ### 🟢 GREEN Phase: Minimal Implementation
 
-- [ ] 1. Implement StatusDisplay Component in `src/components/StatusDisplay/StatusDisplay.tsx`. It is a pure presentational component with:
+- [x] 1. Implement StatusDisplay Component in `src/components/StatusDisplay/StatusDisplay.tsx`. It is a pure presentational component with:
   - Conditional rendering based on props (loading, error, txSignature)
   - Proper semantic HTML with role attributes
   - External link to Solana Explorer
   - Zero layout shift design
   - Import corresponding CSS file (to be created and implemented below)
 
-- [ ] 2. Create StatusDisplay Styles in `src/components/StatusDisplay/status-display.css`
+- [x] 2. Create StatusDisplay Styles in `src/components/StatusDisplay/status-display.css`
   - Use `@apply` with Tailwind classes as shown in [index.css](./src/index.css)
   - Root selector: component's aria-label
   - Child selectors: [role="status"], [role="alert"], links
   - Consistent spacing to prevent layout shift
 
-- [ ] 3. Create StatusDisplay Hook in `src/components/StatusDisplay/useStatusDisplay.ts`
+- [x] 3. Create StatusDisplay Hook in `src/components/StatusDisplay/useStatusDisplay.ts`
   - Return object with computed display values
   - Handle URL construction for different networks
   - Type definitions for props interface
 
-- [ ] 4. Implement WalletConnect Component in `src/components/WalletConnect/WalletConnect.tsx`. It is a pure component wrapping `WalletMultiButton`
+- [x] 4. Implement WalletConnect Component in `src/components/WalletConnect/WalletConnect.tsx`. It is a pure component wrapping `WalletMultiButton`
   - Proper semantic container with aria-label
   - Import corresponding CSS file (to be created and implemented below)
 
-- [ ] 5. Create WalletConnect Styles in `src/components/WalletConnect/wallet-connect.css`
+- [x] 5. Create WalletConnect Styles in `src/components/WalletConnect/wallet-connect.css`
   - Positioning and layout using @apply
   - Responsive design considerations
   - Integration with wallet adapter default styles
 
-- [ ] 6. Create WalletConnect Hook in `src/components/WalletConnect/useWalletConnect.ts`
+- [x] 6. Create WalletConnect Hook in `src/components/WalletConnect/useWalletConnect.ts`
   - Minimal hook returning wallet connection state
   - Integration with `useWallet` hook from adapter
 
-- [ ] 7. Implement MemoForm Component in `src/components/MemoForm/MemoForm.tsx`. It is a pure component receiving all data/handlers from hook
+- [x] 7. Implement MemoForm Component in `src/components/MemoForm/MemoForm.tsx`. It is a pure component receiving all data/handlers from hook
   - Form with semantic HTML: textarea, submit button
   - Proper aria-labels and form structure
   - Conditional rendering for wallet connection state
   - Integration with StatusDisplay child component
   - Import corresponding CSS file (to be created and implemented below)
 
-- [ ] 8. Create MemoForm Styles in `src/components/MemoForm/memo-form.css`
+- [x] 8. Create MemoForm Styles in `src/components/MemoForm/memo-form.css`
   - Form layout using CSS Grid/Flexbox with `@apply`
   - Input styling with focus states
   - Button states (enabled/disabled/loading)
   - Responsive design for mobile/desktop
   - Loading state animations
 
-- [ ] 9. Create MemoForm Hook in `src/components/MemoForm/useMemoForm.ts`
+- [x] 9. Create MemoForm Hook in `src/components/MemoForm/useMemoForm.ts`
   - Import IDL from `../target/idl/anchor_spl_memo.json`
   - State management: memoText, isLoading, txSignature, error
   - Integration with useWallet and useConnection hooks
@@ -109,7 +139,7 @@
 
 ### 🔵 REFACTOR Phase: Optimize Implementation
 
-- [ ] 1. Optimize Performance. Add `memo`, `useMemo`/`useCallback` optimizations where needed
+- [x] 1. Optimize Performance. Add `memo`, `useMemo`/`useCallback` optimizations where needed
   - Implement proper TypeScript interfaces
   - Add error boundaries if necessary
   - Optimize re-render patterns
@@ -124,6 +154,7 @@
   - Component hierarchy assembly
   - **CRITICAL**: Import wallet adapter default styles: `require('@solana/wallet-adapter-react-ui/styles.css')`
   - Import custom App CSS file (to be created and implemented below)
+  - Error Boundary to wrap entire App
 
 - [ ] 2. Create Application Styles in `src/App.css`
   - Global layout and theme

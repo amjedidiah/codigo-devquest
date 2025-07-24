@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Root selector for WalletConnect component */
+section[aria-label="wallet connect"] {
+  @apply flex items-center justify-center w-full py-4;
+  /* Responsive padding for mobile/desktop */
+  @apply sm:py-6;
+  /* Ensure layout stability */
+  min-height: 64px;
+  /* Responsive adjustments */
+  @apply max-sm:px-2;
+
+  /* Style the wallet button (WalletMultiButton) for integration */
+  .wallet-adapter-button {
+    @apply px-6 py-2 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2;
+    @apply text-base;
+
+    /* Responsive adjustments */
+    @apply max-sm:w-full max-sm:text-sm max-sm:px-4 max-sm:py-2;
+  }
+}

@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Root Selector with Nested Selectors */
+section[aria-label="status display"] {
+  @apply w-full p-4 rounded-lg shadow-sm min-h-16 flex flex-col gap-2 items-start
+         transition-all duration-300 ease-in-out;
+
+  /* Error message styling */
+  p[role="alert"] {
+    @apply w-full text-sm font-semibold p-3 rounded-md
+           bg-red-50 dark:bg-red-900/20 
+           text-red-700 dark:text-red-400 
+           border-l-4 border-red-500 dark:border-red-400;
+  }
+
+  /* Success message with transaction link */
+  p:has(a) {
+    @apply w-full text-sm p-3 rounded-md
+           bg-green-50 dark:bg-green-900/20 
+           border-l-4 border-green-500 dark:border-green-400;
+  }
+
+  /* Transaction link styling */
+  a {
+    @apply text-green-700 dark:text-green-400 font-medium underline 
+           decoration-2 underline-offset-2 break-all
+           hover:text-green-900 dark:hover:text-green-200 
+           hover:decoration-green-900 dark:hover:decoration-green-200
+           transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 
+           dark:focus:ring-offset-gray-800 rounded-sm;
+    
+    /* Add icon or visual indicator for external link */
+    &::after {
+      content: " ↗";
+      @apply text-xs opacity-70 ml-1;
+    }
+  }
+
+  /* Animation for status changes */
+  &:not(:empty) {
+    animation: slideIn 0.3s ease-out;
+  }
+}
+
+/* Keyframe for smooth entry animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
