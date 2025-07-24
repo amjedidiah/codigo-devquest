@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import StatusDisplay from "./StatusDisplay";
-import type { Network } from "../../types";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 describe("StatusDisplay", () => {
   const defaultProps = {
     error: "",
     txSignature: "",
-    network: "devnet" as Network,
+    network: WalletAdapterNetwork.Devnet,
   };
 
   it('renders error message with role="alert"', () => {
@@ -39,7 +39,7 @@ describe("StatusDisplay", () => {
       <StatusDisplay
         {...defaultProps}
         txSignature={txSignature}
-        network="devnet"
+        network={WalletAdapterNetwork.Devnet}
       />
     );
     expect(screen.getByRole("link")).toHaveAttribute(
@@ -52,7 +52,7 @@ describe("StatusDisplay", () => {
       <StatusDisplay
         {...defaultProps}
         txSignature={txSignature}
-        network="testnet"
+        network={WalletAdapterNetwork.Testnet}
       />
     );
     expect(screen.getByRole("link")).toHaveAttribute(
@@ -65,7 +65,7 @@ describe("StatusDisplay", () => {
       <StatusDisplay
         {...defaultProps}
         txSignature={txSignature}
-        network="mainnet-beta"
+        network={WalletAdapterNetwork.Mainnet}
       />
     );
     expect(screen.getByRole("link")).toHaveAttribute(

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import MemoForm from "./MemoForm";
 import userEvent from "@testing-library/user-event";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 // CRITICAL MOCKS: These hooks interact with external dependencies (Solana blockchain)
 // and must be mocked to avoid real blockchain calls in unit tests
@@ -39,7 +40,7 @@ describe("MemoForm", () => {
   });
 
   it("should render a form with a textarea, submit and reset button", () => {
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(
@@ -51,7 +52,7 @@ describe("MemoForm", () => {
   });
 
   it("should disable the submit button when wallet is not connected", () => {
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
     expect(screen.getByText(/wallet connection required/i)).toBeInTheDocument();
@@ -66,7 +67,7 @@ describe("MemoForm", () => {
       connected: true,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     expect(
       screen.getByRole("button", { name: /submit memo/i })
@@ -87,7 +88,7 @@ describe("MemoForm", () => {
       handleMemoTextChange: mockHandleChange,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     const textarea = screen.getByRole("textbox");
     expect(textarea).toHaveValue("Hello Solana");
@@ -111,7 +112,7 @@ describe("MemoForm", () => {
       connected: true,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     // Trigger the form's onSubmit
     const form = screen.getByRole("form", { name: /memo form/i });
@@ -129,7 +130,7 @@ describe("MemoForm", () => {
       reset: mockReset,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     await user.click(screen.getByRole("button", { name: /reset form/i }));
 
@@ -149,7 +150,7 @@ describe("MemoForm", () => {
       connected: true,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     expect(screen.getByText("Memo is required")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveAttribute("id", "errorMessage");
@@ -168,7 +169,7 @@ describe("MemoForm", () => {
       connected: true,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     expect(screen.getByLabelText("memo form")).toHaveAttribute(
       "aria-busy",
@@ -191,7 +192,7 @@ describe("MemoForm", () => {
       error: "Transaction failed",
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     const errorElement = screen.getByRole("alert");
     expect(errorElement).toHaveTextContent("Transaction failed");
@@ -207,7 +208,7 @@ describe("MemoForm", () => {
       txSignature,
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", expect.stringContaining(txSignature));
@@ -220,7 +221,7 @@ describe("MemoForm", () => {
       error: "Memo is required",
     });
 
-    render(<MemoForm />);
+    render(<MemoForm network={WalletAdapterNetwork.Devnet} />);
 
     const textarea = screen.getByRole("textbox");
     const describedBy = textarea.getAttribute("aria-describedby");

@@ -2,10 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ErrorBoundary from "./ErrorBoundary";
+import consola from "consola";
 
-// CRITICAL MOCK: console.error must be mocked to prevent test noise and verify error logging
+// CRITICAL MOCK: consola.error must be mocked to prevent test noise and verify error logging
 const mockConsoleError = vi
-  .spyOn(console, "error")
+  .spyOn(consola, "error")
   .mockImplementation(() => {});
 
 // CRITICAL MOCK: window.location.reload must be mocked to prevent actual page reloads during tests

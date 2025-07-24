@@ -64,9 +64,4 @@ form[aria-label="memo form"] {
            focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800
            disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70;
   }
-
-  /* Status display integration - ensure proper spacing */
-  section[aria-label="status display"] {
-    @apply mt-4;
-  }
 }

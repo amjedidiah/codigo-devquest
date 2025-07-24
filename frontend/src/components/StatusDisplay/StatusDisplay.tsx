@@ -22,7 +22,7 @@ const StatusDisplay = memo(function StatusDisplay(
         </p>
       )}
       {status === "success" && (
-        <p aria-live="polite" role="alert">
+        <p>
           <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
             View transaction
           </a>

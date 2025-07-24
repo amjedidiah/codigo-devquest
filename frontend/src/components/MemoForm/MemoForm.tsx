@@ -1,15 +1,15 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import StatusDisplay from "../StatusDisplay/StatusDisplay";
 import "./memo-form.css";
 import useMemoForm from "./useMemoForm";
 import useWalletConnect from "../WalletConnect/useWalletConnect";
-import type { Network } from "../../types";
+import type { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 interface MemoFormProps {
-  network?: Network;
+  network: WalletAdapterNetwork;
 }
 
-function MemoForm({ network = "devnet" }: Readonly<MemoFormProps>) {
+const MemoForm = memo(function MemoForm({ network }: Readonly<MemoFormProps>) {
   const {
     memoText,
     handleMemoTextChange,
@@ -96,6 +96,6 @@ function MemoForm({ network = "devnet" }: Readonly<MemoFormProps>) {
       <StatusDisplay {...statusDisplayProps} />
     </form>
   );
-}
+});
 
 export default MemoForm;

@@ -1,5 +1,6 @@
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import "./wallet-connect.css";
+import { memo } from "react";
 
 /**
  * WalletConnect is a pure presentational component that renders the Solana wallet connection button.
@@ -7,12 +8,12 @@ import "./wallet-connect.css";
  *
  * Accessibility: The container uses aria-label for selection and semantic clarity.
  */
-function WalletConnect() {
+const WalletConnect = memo(function WalletConnect() {
   return (
     <section aria-label="wallet connect">
       <WalletMultiButton />
     </section>
   );
-}
+});
 
 export default WalletConnect;

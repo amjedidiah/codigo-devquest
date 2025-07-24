@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import "./error-boundary.css";
+import consola from "consola";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -31,7 +32,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error for debugging
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    consola.error("ErrorBoundary caught an error:", error, errorInfo);
 
     // In production, this will be sent to an error reporting service
     // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });

@@ -6,9 +6,21 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     globals: true,
-    setupFiles: "./src/setupTests.ts",
+    setupFiles: "./src/vitest-setup.ts",
+    deps: {
+      optimizer: {
+        web: {
+          include: ["vitest-canvas-mock"],
+        },
+      },
+    },
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
     coverage: {
       reporter: ["text", "html"],
     },

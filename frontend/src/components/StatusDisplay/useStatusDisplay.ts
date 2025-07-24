@@ -1,22 +1,17 @@
+import type { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useMemo } from "react";
-import type { Network } from "../../types";
+import { SOLANA_EXPLORER_BASE_URL } from "../../constants";
 
 export interface StatusDisplayProps {
   error: string;
   txSignature: string;
-  network: Network;
+  network: WalletAdapterNetwork;
 }
 
 interface UseStatusDisplayReturn {
   explorerUrl?: string;
   status: "error" | "success" | "idle";
-};
-
-const SOLANA_EXPLORER_BASE_URLS: Record<string, string> = {
-  devnet: "https://explorer.solana.com/tx/",
-  testnet: "https://explorer.solana.com/tx/",
-  "mainnet-beta": "https://explorer.solana.com/tx/",
-};
+}
 
 function useStatusDisplay({
   error,
@@ -27,12 +22,10 @@ function useStatusDisplay({
   const explorerUrl = useMemo(() => {
     if (!txSignature) return;
 
-    const baseUrl =
-      SOLANA_EXPLORER_BASE_URLS[network] ?? SOLANA_EXPLORER_BASE_URLS["devnet"];
     const clusterParam =
       network === "mainnet-beta" ? "" : `?cluster=${network}`;
 
-    return `${baseUrl}${txSignature}${clusterParam}`;
+    return `${SOLANA_EXPLORER_BASE_URL}/tx/${txSignature}${clusterParam}`;
   }, [txSignature, network]);
 
   // Compute display state
@@ -46,6 +39,6 @@ function useStatusDisplay({
     explorerUrl,
     status,
   };
-};
+}
 
 export default useStatusDisplay;
