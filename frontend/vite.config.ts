@@ -5,6 +5,15 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "solana-web3": ["@solana/web3.js"], // For reduced build chunk size
+        },
+      },
+    },
+  },
   test: {
     environment: "happy-dom",
     globals: true,
