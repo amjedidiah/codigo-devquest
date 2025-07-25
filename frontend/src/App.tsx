@@ -1,14 +1,16 @@
 import { lazy, useMemo } from "react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
-import "@solana/wallet-adapter-react-ui/styles.css";
-
 // Import custom components
 import WalletConnect from "./components/WalletConnect/WalletConnect";
 import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
+import MemoFeed from "./components/MemoFeed/MemoFeed";
+
+// Constants
 import { SOLANA_NETWORK } from "./constants";
 
 // Styles
+import "@solana/wallet-adapter-react-ui/styles.css";
 import "./App.css";
 
 const SolanaProvider = lazy(
@@ -33,6 +35,7 @@ function App() {
       <SolanaProvider>
         <WalletConnect />
         <MemoForm network={network} />
+        <MemoFeed />
       </SolanaProvider>
     </ErrorBoundary>
   );

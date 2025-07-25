@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+[aria-label="memo list"] {
+  @apply flex flex-col gap-4;
+}

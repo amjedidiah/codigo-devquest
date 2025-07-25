@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+[aria-label="date filter"] {
+  @apply flex items-center gap-4;
+
+  input[type="date"] {
+    @apply p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500;
+  }
+}

@@ -47,6 +47,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.11
         version: 4.1.11
+      use-debounce:
+        specifier: ^10.0.5
+        version: 10.0.5(react@19.1.0)
     devDependencies:
       '@eslint/js':
         specifier: ^9.31.0
@@ -6290,6 +6293,12 @@ packages:
   usb@2.16.0:
     resolution: {integrity: sha512-jD88fvzDViMDH5KmmNJgzMBDj/95bDTt6+kBNaNxP4G98xUTnDMiLUY2CYmToba6JAFhM9VkcaQuxCNRLGR7zg==}
     engines: {node: '>=12.22.0 <13.0 || >=14.17.0'}
+
+  use-debounce@10.0.5:
+    resolution: {integrity: sha512-Q76E3lnIV+4YT9AHcrHEHYmAd9LKwUAbPXDm7FlqVGDHiSOhX3RDjT8dm0AxbJup6WgOb1YEcKyCr11kBJR5KQ==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      react: '*'
 
   use-sync-external-store@1.2.0:
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
@@ -14931,6 +14940,10 @@ snapshots:
       '@types/w3c-web-usb': 1.0.10
       node-addon-api: 8.5.0
       node-gyp-build: 4.8.4
+
+  use-debounce@10.0.5(react@19.1.0):
+    dependencies:
+      react: 19.1.0
 
   use-sync-external-store@1.2.0(react@19.1.0):
     dependencies:

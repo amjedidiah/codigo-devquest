@@ -19,6 +19,7 @@ App.tsx (Root Application)
 │       └── MemoFeed (New)
 │           ├── SearchBar (New)
 │           ├── DateFilter (New)
+│           ├── TypeFilter (New)
 │           ├── MemoList (New)
 │           │   └── MemoItem (Enhanced for Audio Playback)
 │           └── Pagination (New)
@@ -35,13 +36,13 @@ App.tsx (Root Application)
 - `MemoFeed` → A new container component to display and manage the list of memos.
 - `MemoList` → Renders the list of memos, fetched based on the connected wallet.
 - `MemoItem` → Updated to conditionally render a text memo or an HTML5 audio player for audio memos.
-- `SearchBar`, `DateFilter`, `Pagination` → Controls for filtering and navigating the memo list.
+- `SearchBar`, `DateFilter`, `TypeFilter`, `Pagination` → Controls for filtering and navigating the memo list.
 
 **Hook Responsibilities:**
 
 - `useNetwork` → (New) Manages the current Solana network and provides a function to switch it.
 - `useMemoForm` → (Updated) Logic extended to handle audio recording, IPFS upload, and submitting the IPFScid as a memo.
-- `useMemoFeed` → (New) Handles fetching memos for the connected wallet, client-side searching, filtering by date, and pagination logic.
+- `useMemoFeed` → (New) Handles fetching memos for the connected wallet, client-side searching, filtering by date, filtering by type (text vs. audio), and pagination logic.
 
 ## Phase 1: New Dependencies & Setup
 
@@ -55,39 +56,39 @@ This phase focuses on fetching and displaying existing memos for the connected w
 
 ### 🔴 Phase 2 RED Phase: Write Failing Tests
 
-- [ ] 1. Create `MemoFeed.test.tsx`. Write tests for:
+- [x] 1. Create `MemoFeed.test.tsx`. Write tests for:
   - Rendering loading, error, and success states.
   - Displaying a list of memos when data is available.
   - Showing an empty state message when no memos are found.
 
-- [ ] 2. Create tests for `SearchBar`, `DateFilter`, and `Pagination` components to ensure they render and respond to user input.
+- [x] 2. Create tests for `SearchBar`, `DateFilter`, and `Pagination` components to ensure they render and respond to user input.
 
-- [ ] 3. In `MemoFeed.test.tsx`, write integration tests for:
+- [x] 3. In `MemoFeed.test.tsx`, write integration tests for:
   - Filtering the memo list when a search term is entered.
   - Filtering the memo list when a date range is selected.
   - Updating the memo list when pagination controls are used.
 
 ### 🟢 Phase 2 GREEN Phase: Minimal Implementation
 
-- [ ] 1. **Create `useMemoFeed.ts` hook**: Implement logic to:
-  - Fetch all transactions for the connected wallet's public key using `connection.getSignaturesForAddress()`.
+- [x] 1. **Create `useMemoFeed.ts` hook**: Implement logic to:
+  - Fetch all transactions for the connected wallet's public key.
   - Parse transactions to find and decode memos from the SPL Memo Program.
   - Manage state for `memos`, `isLoading`, `error`, `searchTerm`, `dateRange`, and `currentPage`.
   - Expose functions to update filters and handle pagination.
 
-- [ ] 2. **Create `MemoFeed`, `MemoList`, `MemoItem` Components**: Build the UI to display the memos. `MemoItem` will initially only display text.
+- [x] 2. **Create `MemoFeed`, `MemoList`, `MemoItem` Components**: Build the UI to display the memos. `MemoItem` will initially only display text.
 
-- [ ] 3. **Create `SearchBar`, `DateFilter`, `Pagination` Components**: Build the UI controls for filtering and pagination.
+- [x] 3. **Create `SearchBar`, `DateFilter`, `Pagination` Components**: Build the UI controls for filtering and pagination.
 
-- [ ] 4. **Create `memo-feed.css` and other required CSS files**: Style all new components using Tailwind CSS via `@apply`, ensuring selectors are based on accessible attributes.
+- [x] 4. **Create `memo-feed.css` and other required CSS files**: Style all new components using Tailwind CSS via `@apply`, ensuring selectors are based on accessible attributes.
 
 ### 🔵 Phase 2 REFACTOR Phase: Optimize
 
-- [ ] 1. Optimize memo fetching with caching to prevent redundant RPC calls.
+- [ ] 1. Implement the high-performance architecture as detailed in [Milestone 2: High-Performance Memo Feed Architecture](./milestone-2-performance.md).
 
-- [ ] 2. Use `useMemo` and `useCallback` to prevent unnecessary re-renders in the `MemoFeed` and its children.
+- [ ] 2. Use `useMemo`, `useCallback`, and `React.memo` to prevent unnecessary re-renders in the `MemoFeed` and its children.
 
-- [ ] 3. Consider implementing list virtualization if performance degrades with a large number of memos.
+- [ ] 3. Ensure all components in the `MemoFeed` feature are optimized for 100% keyboard and screen reader accessibility.
 
 ## Phase 3: Feature 2 - Audio Memos
 
@@ -97,11 +98,14 @@ This phase focuses on fetching and displaying existing memos for the connected w
   - Start, stop, and cancel recording actions.
   - Visual feedback during the recording state.
 
-- [ ] 2. Update `MemoForm.test.tsx` to test:
+- [ ] 2. Create tests for `TypeFilter` component to ensure it renders and responds to user input.
+
+- [ ] 3. Update `MemoForm.test.tsx` to test:
   - The new UI for switching between text and audio memo.
   - The flow of recording audio and submitting the form.
+  - Filtering the memo list when a memo type is selected.
 
-- [ ] 3. Update `MemoItem.test.tsx` to test:
+- [ ] 4. Update `MemoItem.test.tsx` to test:
   - Conditional rendering of an `<audio>` player when the memo is detected as an IPFS link.
 
 ### 🟢 Phase 3 GREEN Phase: Minimal Implementation
@@ -112,19 +116,28 @@ This phase focuses on fetching and displaying existing memos for the connected w
 
 - [ ] 2. **Update `useMemoForm.ts` hook**:
   - Add logic to handle the `AudioRecorder` state.
+  - Manage state for `memoType`.
   - On submission of an audio memo, upload the recorded audio blob to IPFS.
     - **CRITICAL**: The IPFS upload logic must be handled securely. API keys for pinning services must not be exposed on the client-side. This may require a serverless function proxy.
   - Take the returned IPFS CID and submit it as a memo transaction.
 
-- [ ] 3. **Update `MemoForm.tsx`**: Add UI elements to toggle between text input and the `AudioRecorder`.
+- [ ] 3. **Create `TypeFilter` Component**: Build the UI controls for filtering using `DateFilter` as a guide.
 
-- [ ] 4. **Update `MemoItem.tsx`**: Implement logic to check if a memo string is an IPFS link and render an `<audio>` tag with the appropriate gateway URL if it is.
+- [ ] 4. **Update `MemoForm.tsx`**: Add UI elements to toggle between text input and the `AudioRecorder`.
+
+- [ ] 5. **Update `MemoItem.tsx`**: Implement logic to check if a memo string is an IPFS link and render an `<audio>` tag with the appropriate gateway URL if it is.
 
 ### 🔵 Phase 3 REFACTOR Phase: Improve UX & Error Handling
 
 - [ ] 1. Add robust error handling for recording failures (e.g., no microphone permission) and IPFS upload errors.
 
 - [ ] 2. Refine the audio recorder UI/UX for clarity and ease of use.
+
+- [ ] 3. Implement the high-performance architecture as detailed in [Milestone 2: High-Performance Memo Feed Architecture](./milestone-2-performance.md).
+
+- [ ] 4. Use `useMemo`, `useCallback`, and `React.memo` to prevent unnecessary re-renders in the `MemoFeed` and its children.
+
+- [ ] 5. Ensure the `AudioRecorder` and updated `MemoForm` are optimized for 100% keyboard and screen reader accessibility.
 
 ## Phase 4: Feature 3 - Network Switcher
 
@@ -156,6 +169,10 @@ This phase focuses on fetching and displaying existing memos for the connected w
 
 - [ ] 2. Ensure the wallet adapter handles network changes gracefully.
 
+- [ ] 3. Use `useMemo`, `useCallback`, and `React.memo` to prevent unnecessary re-renders in `Network Switcher`.
+
+- [ ] 4. Ensure the `NetworkSwitcher` component is optimized for 100% keyboard and screen reader accessibility.
+
 ## Phase 5: Feature 4 - PWA Support
 
 - [ ] 1. **Configure `vite.config.ts`**:
@@ -177,7 +194,7 @@ This phase focuses on fetching and displaying existing memos for the connected w
 
 - [ ] 3. **Responsive Design Check**: Verify the new components are fully responsive across various screen sizes.
 
-- [ ] 4. **Update Documentation**: Update `README.md` with information about the new features, required environment variables (e.g., for an IPFS pinning service), and setup instructions.
+- [ ] 4. **Update Documentation**: Update `README.md` with information about the new features, required environment variables (e.g., for an IPFS pinning service), and setup instructions. Also include int he README information about what stands out about my frontend: memoization for minimal re-renders, accessibility in mind, zero to none layout shift
 
 ### Critical Success Criteria
 
